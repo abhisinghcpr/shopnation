@@ -37,6 +37,14 @@ const startServer = async () => {
 };
 startServer();
 
+// Root Route
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'ShopNation backend is live'
+  });
+});
+
 // Health Check API
 app.get('/api/v1/health', (req, res) => {
   res.status(200).json({
