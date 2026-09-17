@@ -54,7 +54,7 @@ export const AdminAuthProvider = ({ children }) => {
         return adminUser;
       }
     } catch (error) {
-      const message = error.response?.data?.message || 'Login failed. Please check your credentials.';
+      const message = error.response?.data?.message || (error.message === 'Network Error' ? 'Network Error: Cannot connect to server.' : error.message) || 'Login failed. Please check your credentials.';
       throw new Error(message);
     }
   };

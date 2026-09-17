@@ -247,7 +247,7 @@ export const CustomerAuthProvider = ({ children }) => {
         return customerData;
       }
     } catch (error) {
-      const message = error.response?.data?.message || 'Registration failed. Please try again.';
+      const message = error.response?.data?.message || (error.message === 'Network Error' ? 'Network Error: Cannot connect to server.' : error.message) || 'Registration failed. Please try again.';
       throw new Error(message);
     }
   };
@@ -276,7 +276,7 @@ export const CustomerAuthProvider = ({ children }) => {
         return customerData;
       }
     } catch (error) {
-      const message = error.response?.data?.message || 'Login failed. Please check your credentials.';
+      const message = error.response?.data?.message || (error.message === 'Network Error' ? 'Network Error: Cannot connect to server.' : error.message) || 'Login failed. Please check your credentials.';
       throw new Error(message);
     }
   };

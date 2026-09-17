@@ -3,7 +3,7 @@
  * English-only configuration for API Endpoints, LocalStorage, and Static Uploads.
  */
 
-export const BASE_API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+export const BASE_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 export const UPLOADS_BASE_URL = import.meta.env.VITE_UPLOADS_BASE_URL || 'http://localhost:3000';
 
 /**
