@@ -411,17 +411,35 @@ const CustomerProductListPage = () => {
                   </span>
                 )}
               </div>
-              <button
-                className="btn btn-fk-blue text-white btn-sm fw-bold px-2 rounded-1 d-flex align-items-center gap-1"
-                onClick={(e) => handleAddToCart(prod, e)}
-                disabled={prod.quantity === 0 || cartBusy}
-                style={{ fontSize: '0.75rem' }}
-              >
-                {cartBusy
-                  ? <span className="spinner-border spinner-border-sm" role="status"></span>
-                  : <><i className="bi bi-cart-plus"></i> Add</>
-                }
-              </button>
+              {isInCart ? (
+                <button
+                  type="button"
+                  className="btn btn-success text-white btn-sm fw-bold px-2 rounded-1 d-flex align-items-center gap-1"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    navigate('/customer/cart');
+                  }}
+                  style={{ fontSize: '0.75rem' }}
+                  title="Go to Cart"
+                >
+                  <i className="bi bi-check2-circle"></i> Added
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-fk-blue text-white btn-sm fw-bold px-2 rounded-1 d-flex align-items-center gap-1"
+                  onClick={(e) => handleAddToCart(prod, e)}
+                  disabled={prod.quantity === 0 || cartBusy}
+                  style={{ fontSize: '0.75rem' }}
+                >
+                  {cartBusy ? (
+                    <span className="spinner-border spinner-border-sm" role="status"></span>
+                  ) : (
+                    <><i className="bi bi-cart-plus"></i> Add</>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>

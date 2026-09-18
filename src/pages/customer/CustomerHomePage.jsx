@@ -118,6 +118,8 @@ const CustomerHomePage = () => {
     const isWishlisted = isInWishlist(productId);
     const isProcessing = actionId === productId;
 
+    const isInCart = cart?.some((item) => (item.product?._id || item.product) === productId);
+
     return (
       <div className="col-12 col-sm-6 col-md-4 col-lg-3" key={productId}>
         <div className="card h-100 border-0 shadow-sm rounded-3 overflow-hidden position-relative hover-shadow bg-white">
@@ -185,13 +187,33 @@ const CustomerHomePage = () => {
                 )}
               </div>
 
-              <button
-                className="btn btn-fk-blue text-white btn-sm fw-bold px-3 py-1 rounded-1"
-                onClick={(e) => handleAddToCart(prod, e)}
-                disabled={prod.quantity === 0 || isProcessing}
-              >
-                <i className="bi bi-cart-plus me-1"></i> Add
-              </button>
+              {isInCart ? (
+                <button
+                  type="button"
+                  className="btn btn-success text-white btn-sm fw-bold px-2 py-1 rounded-1 d-flex align-items-center gap-1"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    navigate('/customer/cart');
+                  }}
+                  title="Go to Cart"
+                >
+                  <i className="bi bi-check2-circle"></i> Added
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-fk-blue text-white btn-sm fw-bold px-3 py-1 rounded-1 d-flex align-items-center gap-1"
+                  onClick={(e) => handleAddToCart(prod, e)}
+                  disabled={prod.quantity === 0 || isProcessing}
+                >
+                  {isProcessing ? (
+                    <span className="spinner-border spinner-border-sm" role="status"></span>
+                  ) : (
+                    <><i className="bi bi-cart-plus me-1"></i> Add</>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>

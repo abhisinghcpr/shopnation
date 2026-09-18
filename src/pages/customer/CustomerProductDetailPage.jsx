@@ -21,6 +21,7 @@ const CustomerProductDetailPage = () => {
 
   const productId = product?._id || product?.id;
   const inWishlist = isInWishlist(productId);
+  const isInCart = cart?.some((item) => (item.product?._id || item.product) === productId);
 
   useEffect(() => {
     if (id) {
@@ -258,22 +259,31 @@ const CustomerProductDetailPage = () => {
                 </button>
               </div>
 
-              <button
-                className="btn btn-warning text-dark fw-bold px-4 flex-grow-1 shadow-sm d-flex align-items-center justify-content-center gap-2"
-                onClick={handleAddToCart}
-                disabled={product.quantity === 0 || isCartProcessing}
-              >
-                {isCartProcessing ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm" role="status"></span>
-                    Adding...
-                  </>
-                ) : (
-                  <>
-                    <i className="bi bi-cart-plus fs-5"></i> Add to Cart
-                  </>
-                )}
-              </button>
+              {isInCart ? (
+                <button
+                  className="btn btn-success text-white fw-bold px-4 flex-grow-1 shadow-sm d-flex align-items-center justify-content-center gap-2"
+                  onClick={() => navigate('/customer/cart')}
+                >
+                  <i className="bi bi-check2-circle fs-5"></i> Go to Cart
+                </button>
+              ) : (
+                <button
+                  className="btn btn-warning text-dark fw-bold px-4 flex-grow-1 shadow-sm d-flex align-items-center justify-content-center gap-2"
+                  onClick={handleAddToCart}
+                  disabled={product.quantity === 0 || isCartProcessing}
+                >
+                  {isCartProcessing ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm" role="status"></span>
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-cart-plus fs-5"></i> Add to Cart
+                    </>
+                  )}
+                </button>
+              )}
 
               <button
                 className={`btn ${inWishlist ? 'btn-danger' : 'btn-outline-danger'} fw-bold px-3 shadow-sm d-flex align-items-center justify-content-center`}
