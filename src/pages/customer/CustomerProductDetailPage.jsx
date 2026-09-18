@@ -21,7 +21,7 @@ const CustomerProductDetailPage = () => {
 
   const productId = product?._id || product?.id;
   const inWishlist = isInWishlist(productId);
-  const isInCart = cart?.some((item) => (item.product?._id || item.product) === productId);
+  const isInCart = cart?.some((item) => (item?.product?._id || item?.product) === productId);
 
   useEffect(() => {
     if (id) {

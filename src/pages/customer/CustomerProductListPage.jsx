@@ -339,6 +339,7 @@ const CustomerProductListPage = () => {
       ? (prod.discountType === 'fixed' ? `₹${prod.discountValue} OFF` : `${prod.discountValue}% OFF`)
       : null;
     const inWishlist   = isInWishlist(productId);
+    const isInCart     = cart?.some((item) => (item?.product?._id || item?.product) === productId);
     const cartBusy     = actionId === `cart_${productId}`;
     const wishlistBusy = actionId === `wish_${productId}`;
 
