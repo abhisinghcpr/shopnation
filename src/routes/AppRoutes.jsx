@@ -15,6 +15,7 @@ import AdminProtectedRoute from './AdminProtectedRoute';
 
 // Customer Imports
 import CustomerLayout from '../components/customer/CustomerLayout';
+import CustomerErrorBoundary from '../components/customer/CustomerErrorBoundary';
 import CustomerHomePage from '../pages/customer/CustomerHomePage';
 import CustomerProductListPage from '../pages/customer/CustomerProductListPage';
 import CustomerProductDetailPage from '../pages/customer/CustomerProductDetailPage';
@@ -26,6 +27,7 @@ import CustomerAddressPage from '../pages/customer/CustomerAddressPage';
 import CustomerCheckoutPage from '../pages/customer/CustomerCheckoutPage';
 import CustomerOrdersPage from '../pages/customer/CustomerOrdersPage';
 import CustomerOrderDetailPage from '../pages/customer/CustomerOrderDetailPage';
+import CustomerNotificationsPage from '../pages/customer/CustomerNotificationsPage';
 import CustomerProtectedRoute from './CustomerProtectedRoute';
 
 const AppRoutes = () => {
@@ -33,20 +35,91 @@ const AppRoutes = () => {
     <Routes>
       {/* Customer Routes */}
       <Route element={<CustomerLayout />}>
-        <Route path="/customer/home" element={<CustomerHomePage />} />
-        <Route path="/customer/products" element={<CustomerProductListPage />} />
-        <Route path="/customer/products/:id" element={<CustomerProductDetailPage />} />
+        <Route
+          path="/customer/home"
+          element={
+            <CustomerErrorBoundary>
+              <CustomerHomePage />
+            </CustomerErrorBoundary>
+          }
+        />
+        <Route
+          path="/customer/products"
+          element={
+            <CustomerErrorBoundary>
+              <CustomerProductListPage />
+            </CustomerErrorBoundary>
+          }
+        />
+        <Route
+          path="/customer/products/:id"
+          element={
+            <CustomerErrorBoundary>
+              <CustomerProductDetailPage />
+            </CustomerErrorBoundary>
+          }
+        />
         <Route path="/customer/login" element={<CustomerLoginPage />} />
         <Route path="/customer/register" element={<CustomerRegisterPage />} />
 
         {/* Protected Customer Routes */}
         <Route element={<CustomerProtectedRoute />}>
-          <Route path="/customer/cart" element={<CustomerCartPage />} />
-          <Route path="/customer/wishlist" element={<CustomerWishlistPage />} />
-          <Route path="/customer/addresses" element={<CustomerAddressPage />} />
-          <Route path="/customer/checkout" element={<CustomerCheckoutPage />} />
-          <Route path="/customer/orders" element={<CustomerOrdersPage />} />
-          <Route path="/customer/orders/:id" element={<CustomerOrderDetailPage />} />
+          <Route
+            path="/customer/cart"
+            element={
+              <CustomerErrorBoundary>
+                <CustomerCartPage />
+              </CustomerErrorBoundary>
+            }
+          />
+          <Route
+            path="/customer/wishlist"
+            element={
+              <CustomerErrorBoundary>
+                <CustomerWishlistPage />
+              </CustomerErrorBoundary>
+            }
+          />
+          <Route
+            path="/customer/addresses"
+            element={
+              <CustomerErrorBoundary>
+                <CustomerAddressPage />
+              </CustomerErrorBoundary>
+            }
+          />
+          <Route
+            path="/customer/checkout"
+            element={
+              <CustomerErrorBoundary>
+                <CustomerCheckoutPage />
+              </CustomerErrorBoundary>
+            }
+          />
+          <Route
+            path="/customer/orders"
+            element={
+              <CustomerErrorBoundary>
+                <CustomerOrdersPage />
+              </CustomerErrorBoundary>
+            }
+          />
+          <Route
+            path="/customer/orders/:id"
+            element={
+              <CustomerErrorBoundary>
+                <CustomerOrderDetailPage />
+              </CustomerErrorBoundary>
+            }
+          />
+          <Route
+            path="/customer/notifications"
+            element={
+              <CustomerErrorBoundary>
+                <CustomerNotificationsPage />
+              </CustomerErrorBoundary>
+            }
+          />
         </Route>
       </Route>
 

@@ -124,7 +124,15 @@ const CustomerCartPage = () => {
                 My Cart ({cart.reduce((t, i) => t + (i.quantity || 1), 0)})
               </h5>
               <button
-                onClick={clearCart}
+                onClick={async () => {
+                  if (!window.confirm('Are you sure you want to clear your entire cart?')) return;
+                  try {
+                    await clearCart();
+                    showToast(setSuccessMsg, 'Cart cleared successfully');
+                  } catch (err) {
+                    showToast(setErrorMsg, err.message || 'Failed to clear cart');
+                  }
+                }}
                 className="btn btn-link text-danger text-decoration-none fs-8 p-0 fw-semibold"
               >
                 Clear Cart

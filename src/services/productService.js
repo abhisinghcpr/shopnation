@@ -27,6 +27,34 @@ export const productService = {
   },
 
   /**
+   * Fetch Single Product by ID (GET /api/v1/products/:id)
+   * Falls back to filtering from the full product list if the endpoint
+   * doesn't return a product field (backend only has PUT/DELETE for /:id).
+   */
+  async getProductById(id) {
+    try {
+      // Try the direct endpoint first
+      const response = await axios.get(`${BASE_API_URL}${API_ENDPOINTS.PRODUCTS_V1.BY_ID(id)}`);
+      if (response.data.product) {
+        return response.data.product;
+      }
+      // Fallback: scan the full catalog
+      const allProducts = await this.getProducts();
+      return allProducts.find((p) => p._id === id || p.id === id) || null;
+    } catch (error) {
+      // If 404 or any error on direct endpoint, fall back to full catalog
+      try {
+        console.warn('getProductById direct fetch failed, falling back to catalog scan:', error.message);
+        const allProducts = await this.getProducts();
+        return allProducts.find((p) => p._id === id || p.id === id) || null;
+      } catch (fallbackError) {
+        console.error('Error fetching product by ID (fallback also failed):', fallbackError);
+        throw fallbackError;
+      }
+    }
+  },
+
+  /**
    * Create Product (POST /api/v1/products)
    * Supports FormData for image file upload
    */

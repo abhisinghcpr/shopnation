@@ -3,7 +3,6 @@ import axios from 'axios';
 import { STORAGE_KEYS, BASE_API_URL, API_ENDPOINTS } from '../config/apiConfig';
 import { cartService } from '../services/cartService';
 import { wishlistService } from '../services/wishlistService';
-
 import { notificationService } from '../services/notificationService';
 
 const CustomerAuthContext = createContext();
@@ -97,9 +96,15 @@ export const CustomerAuthProvider = ({ children }) => {
     };
 
     initCustomer();
-  }, [refreshCart, refreshWishlist]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount — refreshCart/refreshWishlist/refreshUnreadNotifications are stable callbacks
 
-  // Cart Action Handlers with stock validation & backend persistence
+  // ─── Cart Action Handlers with Optimistic Updates ───────────────────────────
+
+  /**
+   * addToCart — Optimistic: immediately increment count in UI,
+   * then sync with server response. Roll back on failure.
+   */
   const addToCart = async (productId, quantity = 1) => {
     const token = localStorage.getItem(STORAGE_KEYS.CUSTOMER_TOKEN);
     if (!token || !customer) {
@@ -107,6 +112,24 @@ export const CustomerAuthProvider = ({ children }) => {
       err.code = 'UNAUTHENTICATED';
       throw err;
     }
+
+    // Optimistic update: add a temporary placeholder entry
+    const prevCart = cart;
+    const existingIndex = cart.findIndex(
+      (item) => (item.product?._id || item.product?.id) === productId
+    );
+
+    if (existingIndex > -1) {
+      // Optimistically increase quantity
+      setCart((prev) =>
+        prev.map((item, idx) =>
+          idx === existingIndex
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        )
+      );
+    }
+    // (If new item — we can't fully optimistic-add without product data, so we just let the API response set state)
 
     try {
       const res = await cartService.addToCart(productId, quantity);
@@ -117,11 +140,17 @@ export const CustomerAuthProvider = ({ children }) => {
       }
       return res;
     } catch (error) {
+      // Roll back optimistic update
+      setCart(prevCart);
       console.error('Add to cart failed:', error);
       throw error;
     }
   };
 
+  /**
+   * updateCartQuantity — Optimistic: immediately update qty in UI,
+   * sync with server, roll back on failure.
+   */
   const updateCartQuantity = async (productId, quantity) => {
     const token = localStorage.getItem(STORAGE_KEYS.CUSTOMER_TOKEN);
     if (!token || !customer) {
@@ -129,6 +158,17 @@ export const CustomerAuthProvider = ({ children }) => {
       err.code = 'UNAUTHENTICATED';
       throw err;
     }
+
+    const prevCart = cart;
+
+    // Optimistic update
+    setCart((prev) =>
+      prev.map((item) =>
+        (item.product?._id || item.product?.id) === productId
+          ? { ...item, quantity }
+          : item
+      )
+    );
 
     try {
       const res = await cartService.updateCartItem(productId, quantity);
@@ -139,24 +179,38 @@ export const CustomerAuthProvider = ({ children }) => {
       }
       return res;
     } catch (error) {
+      // Roll back
+      setCart(prevCart);
       console.error('Update cart item quantity failed:', error);
       throw error;
     }
   };
 
+  /**
+   * removeFromCart — Optimistic: immediately remove from UI,
+   * sync with server, roll back on failure.
+   */
   const removeFromCart = async (productId) => {
     const token = localStorage.getItem(STORAGE_KEYS.CUSTOMER_TOKEN);
     if (!token || !customer) return;
+
+    const prevCart = cart;
+
+    // Optimistic update
+    setCart((prev) =>
+      prev.filter((item) => (item.product?._id || item.product?.id) !== productId)
+    );
 
     try {
       const res = await cartService.removeCartItem(productId);
       if (res.cart) {
         setCart(res.cart);
-      } else {
-        await refreshCart();
       }
+      // If no cart in response, keep our optimistic state (it's already removed)
       return res;
     } catch (error) {
+      // Roll back
+      setCart(prevCart);
       console.error('Remove from cart failed:', error);
       throw error;
     }
@@ -166,22 +220,45 @@ export const CustomerAuthProvider = ({ children }) => {
     const token = localStorage.getItem(STORAGE_KEYS.CUSTOMER_TOKEN);
     if (!token || !customer) return;
 
+    const prevCart = cart;
+    // Optimistic update
+    setCart([]);
+
     try {
       await cartService.clearCart();
-      setCart([]);
     } catch (error) {
+      // Roll back
+      setCart(prevCart);
       console.error('Clear cart failed:', error);
       throw error;
     }
   };
 
-  // Wishlist Action Handlers
+  // ─── Wishlist Action Handlers with Optimistic Updates ───────────────────────
+
+  /**
+   * toggleWishlist — Optimistic: immediately add/remove in UI,
+   * sync with server response, roll back on failure.
+   */
   const toggleWishlist = async (productId) => {
     const token = localStorage.getItem(STORAGE_KEYS.CUSTOMER_TOKEN);
     if (!token || !customer) {
       const err = new Error('UNAUTHENTICATED');
       err.code = 'UNAUTHENTICATED';
       throw err;
+    }
+
+    const prevWishlist = wishlist;
+    const isCurrentlyInWishlist = wishlist.some(
+      (item) => (item._id || item.id) === productId
+    );
+
+    // Optimistic update
+    if (isCurrentlyInWishlist) {
+      setWishlist((prev) => prev.filter((item) => (item._id || item.id) !== productId));
+    } else {
+      // Add a minimal placeholder — server will return the full populated product
+      setWishlist((prev) => [...prev, { _id: productId, id: productId }]);
     }
 
     try {
@@ -193,24 +270,35 @@ export const CustomerAuthProvider = ({ children }) => {
       }
       return res;
     } catch (error) {
+      // Roll back
+      setWishlist(prevWishlist);
       console.error('Toggle wishlist failed:', error);
       throw error;
     }
   };
 
+  /**
+   * removeFromWishlist — Optimistic: immediately remove from UI,
+   * sync with server, roll back on failure.
+   */
   const removeFromWishlist = async (productId) => {
     const token = localStorage.getItem(STORAGE_KEYS.CUSTOMER_TOKEN);
     if (!token || !customer) return;
+
+    const prevWishlist = wishlist;
+
+    // Optimistic update
+    setWishlist((prev) => prev.filter((item) => (item._id || item.id) !== productId));
 
     try {
       const res = await wishlistService.removeFromWishlist(productId);
       if (res.wishlist) {
         setWishlist(res.wishlist);
-      } else {
-        await refreshWishlist();
       }
       return res;
     } catch (error) {
+      // Roll back
+      setWishlist(prevWishlist);
       console.error('Remove from wishlist failed:', error);
       throw error;
     }

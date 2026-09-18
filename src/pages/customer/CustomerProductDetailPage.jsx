@@ -15,21 +15,25 @@ const CustomerProductDetailPage = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const [isProcessing, setIsProcessing] = useState(false);
+  // Separate processing flags so cart and wishlist actions are independently operable
+  const [isCartProcessing, setIsCartProcessing] = useState(false);
+  const [isWishlistProcessing, setIsWishlistProcessing] = useState(false);
 
   const productId = product?._id || product?.id;
   const inWishlist = isInWishlist(productId);
 
   useEffect(() => {
-    fetchProductDetails();
+    if (id) {
+      fetchProductDetails();
+    }
   }, [id]);
 
   const fetchProductDetails = async () => {
     setLoading(true);
     setErrorMsg('');
     try {
-      const products = await productService.getProducts();
-      const found = products.find((p) => p._id === id || p.id === id);
+      // Uses getProductById which tries direct endpoint then falls back to catalog scan
+      const found = await productService.getProductById(id);
       if (found) {
         setProduct(found);
       } else {
@@ -37,15 +41,15 @@ const CustomerProductDetailPage = () => {
       }
     } catch (err) {
       console.error('Failed to load product details:', err);
-      setErrorMsg('Unable to load product details');
+      setErrorMsg('Unable to load product details. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleAddToCart = async () => {
-    if (!product || isProcessing) return;
-    setIsProcessing(true);
+    if (!product || isCartProcessing) return;
+    setIsCartProcessing(true);
     setErrorMsg('');
     setSuccessMsg('');
 
@@ -60,13 +64,13 @@ const CustomerProductDetailPage = () => {
         setErrorMsg(err.message || 'Failed to add product to cart');
       }
     } finally {
-      setIsProcessing(false);
+      setIsCartProcessing(false);
     }
   };
 
   const handleToggleWishlist = async () => {
-    if (!product || isProcessing) return;
-    setIsProcessing(true);
+    if (!product || isWishlistProcessing) return;
+    setIsWishlistProcessing(true);
     setErrorMsg('');
     setSuccessMsg('');
 
@@ -81,7 +85,7 @@ const CustomerProductDetailPage = () => {
         setErrorMsg(err.message || 'Failed to update wishlist');
       }
     } finally {
-      setIsProcessing(false);
+      setIsWishlistProcessing(false);
     }
   };
 
@@ -103,9 +107,17 @@ const CustomerProductDetailPage = () => {
           <i className="bi bi-exclamation-triangle fs-1 d-block mb-2 text-warning"></i>
           <h4>Product Not Found</h4>
           <p className="text-muted mb-3">{errorMsg || 'The requested product is not available.'}</p>
-          <Link to="/customer/products" className="btn btn-primary fw-bold">
-            Back to Shop Catalog
-          </Link>
+          <div className="d-flex gap-3 justify-content-center flex-wrap">
+            <button
+              className="btn btn-outline-secondary fw-bold"
+              onClick={fetchProductDetails}
+            >
+              <i className="bi bi-arrow-clockwise me-2"></i>Retry
+            </button>
+            <Link to="/customer/products" className="btn btn-primary fw-bold">
+              Back to Shop Catalog
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -124,6 +136,13 @@ const CustomerProductDetailPage = () => {
         <ol className="breadcrumb fs-8">
           <li className="breadcrumb-item"><Link to="/customer/home">Home</Link></li>
           <li className="breadcrumb-item"><Link to="/customer/products">Shop Products</Link></li>
+          {categoryName && (
+            <li className="breadcrumb-item">
+              <Link to={`/customer/products?category=${encodeURIComponent(categoryName)}`}>
+                {categoryName}
+              </Link>
+            </li>
+          )}
           <li className="breadcrumb-item active" aria-current="page">{product.name}</li>
         </ol>
       </nav>
@@ -133,12 +152,14 @@ const CustomerProductDetailPage = () => {
         <div className="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
           <i className="bi bi-check-circle-fill me-2"></i>
           {successMsg}
+          <button type="button" className="btn-close" onClick={() => setSuccessMsg('')}></button>
         </div>
       )}
       {errorMsg && (
         <div className="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
           <i className="bi bi-exclamation-circle-fill me-2"></i>
           {errorMsg}
+          <button type="button" className="btn-close" onClick={() => setErrorMsg('')}></button>
         </div>
       )}
 
@@ -161,13 +182,13 @@ const CustomerProductDetailPage = () => {
           {/* Product Info Column */}
           <div className="col-12 col-md-6 p-4 p-lg-5">
             <div className="d-flex align-items-center justify-content-between mb-2">
-              <span className="badge bg-light text-primary border border-primary-subtle px-3 py-1.5 fw-semibold fs-7">
+              <span className="badge bg-light text-primary border border-primary-subtle px-3 fw-semibold fs-7">
                 {categoryName || 'General'}
               </span>
               <span
                 className={`badge rounded-pill ${
                   product.quantity > 0 ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'
-                } px-3 py-1.5`}
+                } px-3`}
               >
                 {product.quantity > 0 ? `In Stock (${product.quantity})` : 'Out of Stock'}
               </span>
@@ -198,7 +219,7 @@ const CustomerProductDetailPage = () => {
 
               {hasDiscount && (
                 <div className="mt-2">
-                  <span className="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle px-3 py-1.5 fs-7">
+                  <span className="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle px-3 fs-7">
                     Save ₹{savings.toLocaleString('en-IN')} ({product.discountType === 'fixed' ? `₹${product.discountValue} Off` : `${product.discountValue}% Off`})
                   </span>
                 </div>
@@ -217,7 +238,7 @@ const CustomerProductDetailPage = () => {
                   className="btn btn-outline-secondary"
                   type="button"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  disabled={quantity <= 1 || isProcessing}
+                  disabled={quantity <= 1 || isCartProcessing}
                 >
                   -
                 </button>
@@ -231,27 +252,40 @@ const CustomerProductDetailPage = () => {
                   className="btn btn-outline-secondary"
                   type="button"
                   onClick={() => setQuantity((q) => Math.min(product.quantity || 1, q + 1))}
-                  disabled={quantity >= (product.quantity || 1) || isProcessing}
+                  disabled={quantity >= (product.quantity || 1) || isCartProcessing}
                 >
                   +
                 </button>
               </div>
 
               <button
-                className="btn btn-warning text-dark fw-bold px-4 py-2.5 flex-grow-1 shadow-sm d-flex align-items-center justify-content-center gap-2"
+                className="btn btn-warning text-dark fw-bold px-4 flex-grow-1 shadow-sm d-flex align-items-center justify-content-center gap-2"
                 onClick={handleAddToCart}
-                disabled={product.quantity === 0 || isProcessing}
+                disabled={product.quantity === 0 || isCartProcessing}
               >
-                <i className="bi bi-cart-plus fs-5"></i> Add to Cart
+                {isCartProcessing ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status"></span>
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-cart-plus fs-5"></i> Add to Cart
+                  </>
+                )}
               </button>
 
               <button
-                className={`btn ${inWishlist ? 'btn-danger' : 'btn-outline-danger'} fw-bold px-3 py-2.5 shadow-sm d-flex align-items-center justify-content-center`}
+                className={`btn ${inWishlist ? 'btn-danger' : 'btn-outline-danger'} fw-bold px-3 shadow-sm d-flex align-items-center justify-content-center`}
                 onClick={handleToggleWishlist}
-                disabled={isProcessing}
+                disabled={isWishlistProcessing}
                 title={inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
               >
-                <i className={`bi ${inWishlist ? 'bi-heart-fill' : 'bi-heart'} fs-5`}></i>
+                {isWishlistProcessing ? (
+                  <span className="spinner-border spinner-border-sm" role="status"></span>
+                ) : (
+                  <i className={`bi ${inWishlist ? 'bi-heart-fill' : 'bi-heart'} fs-5`}></i>
+                )}
               </button>
             </div>
           </div>
@@ -378,7 +412,7 @@ const ProductReviewsSection = ({ productId, onReviewChange }) => {
 
   return (
     <div className="card border-0 shadow-sm rounded-4 p-4 p-lg-5 mb-4">
-      <h4 className="fw-bold text-dark mb-4">Ratings & Customer Reviews</h4>
+      <h4 className="fw-bold text-dark mb-4">Ratings &amp; Customer Reviews</h4>
 
       {/* Overview & Distribution Row */}
       <div className="row g-4 mb-5 align-items-center bg-light rounded-3 p-4 mx-0">
@@ -395,7 +429,7 @@ const ProductReviewsSection = ({ productId, onReviewChange }) => {
             const count = stats.distribution[star] || 0;
             const pct = stats.totalCount > 0 ? (count / stats.totalCount) * 100 : 0;
             return (
-              <div key={star} className="d-flex align-items-center gap-2 mb-1.5">
+              <div key={star} className="d-flex align-items-center gap-2 mb-2">
                 <span className="fs-8 text-secondary fw-bold" style={{ width: '40px' }}>{star} ★</span>
                 <div className="progress flex-grow-1" style={{ height: '8px' }}>
                   <div

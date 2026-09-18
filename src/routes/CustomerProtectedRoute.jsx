@@ -6,10 +6,16 @@ const CustomerProtectedRoute = () => {
   const { isAuthenticated, loading } = useCustomerAuth();
   const location = useLocation();
 
+  // Show a Bootstrap spinner while auth state is being initialized
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#2874f0]"></div>
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3 text-muted fw-semibold">Verifying your session...</p>
+        </div>
       </div>
     );
   }

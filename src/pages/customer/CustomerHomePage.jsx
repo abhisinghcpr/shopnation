@@ -13,6 +13,7 @@ const CustomerHomePage = () => {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState('');
 
   useEffect(() => {
     fetchHomeData();
@@ -20,6 +21,7 @@ const CustomerHomePage = () => {
 
   const fetchHomeData = async () => {
     setLoading(true);
+    setFetchError('');
     try {
       const [fetchedCat, fetchedProd] = await Promise.all([
         categoryService.getCategories(),
@@ -28,7 +30,8 @@ const CustomerHomePage = () => {
       setCategories(fetchedCat.filter((c) => c.isActive !== false));
       setProducts(fetchedProd.filter((p) => p.isActive !== false));
     } catch (err) {
-      console.error('Failed to load home page data from MongoDB:', err);
+      console.error('Failed to load home page data:', err);
+      setFetchError('Unable to load products. Please check your connection.');
     } finally {
       setLoading(false);
     }
@@ -234,6 +237,19 @@ const CustomerHomePage = () => {
       </section>
 
       <div className="container">
+        {/* API Error Alert */}
+        {fetchError && !loading && (
+          <div className="alert alert-danger d-flex align-items-center justify-content-between flex-wrap gap-3 shadow-sm mb-4" role="alert">
+            <div>
+              <i className="bi bi-wifi-off me-2"></i>
+              <strong>Network Error:</strong> {fetchError}
+            </div>
+            <button className="btn btn-sm btn-outline-danger fw-semibold" onClick={fetchHomeData}>
+              <i className="bi bi-arrow-clockwise me-2"></i>Retry
+            </button>
+          </div>
+        )}
+
         {/* Toast Notification Alert */}
         {toastMsg && (
           <div className={`alert alert-${toastType} alert-dismissible fade show shadow-sm mb-4`} role="alert">

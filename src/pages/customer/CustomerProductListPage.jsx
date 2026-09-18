@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { productService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
 import { getImageUrl } from '../../config/apiConfig';
@@ -17,10 +17,10 @@ const CustomerProductListPage = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [actionId, setActionId] = useState(null);
 
-  // Filters
+  // Filters — read initial values from URL search params
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'ALL');
-  const [sortBy, setSortBy] = useState('DEFAULT');
+  const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'DEFAULT');
   const [maxPrice, setMaxPrice] = useState(100000);
 
   const showToast = (setter, msg) => {
@@ -68,15 +68,20 @@ const CustomerProductListPage = () => {
     fetchCatalogData();
   }, []);
 
+  // Sync filter state when URL params change (e.g. from Home category click)
   useEffect(() => {
     const cat = searchParams.get('category');
     const srch = searchParams.get('search');
+    const sort = searchParams.get('sort');
     if (cat) setSelectedCategory(cat);
+    else setSelectedCategory('ALL');
     if (srch) setSearchQuery(srch);
+    if (sort) setSortBy(sort);
   }, [searchParams]);
 
   const fetchCatalogData = async () => {
     setLoading(true);
+    setErrorMsg('');
     try {
       const [fetchedProducts, fetchedCategories] = await Promise.all([
         productService.getProducts(),
@@ -85,7 +90,8 @@ const CustomerProductListPage = () => {
       setProducts(fetchedProducts.filter((p) => p.isActive !== false));
       setCategories(fetchedCategories.filter((c) => c.isActive !== false));
     } catch (err) {
-      console.error('Error loading product catalog from MongoDB:', err);
+      console.error('Error loading product catalog:', err);
+      setErrorMsg('Unable to load products. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -122,12 +128,13 @@ const CustomerProductListPage = () => {
 
   const handleCategorySelect = (catName) => {
     setSelectedCategory(catName);
+    const newParams = new URLSearchParams(searchParams);
     if (catName === 'ALL') {
-      searchParams.delete('category');
+      newParams.delete('category');
     } else {
-      searchParams.set('category', catName);
+      newParams.set('category', catName);
     }
-    setSearchParams(searchParams);
+    setSearchParams(newParams);
   };
 
   return (
@@ -136,7 +143,9 @@ const CustomerProductListPage = () => {
       <nav aria-label="breadcrumb" className="mb-3">
         <ol className="breadcrumb fs-8">
           <li className="breadcrumb-item"><Link to="/customer/home">Home</Link></li>
-          <li className="breadcrumb-item active" aria-current="page">Shop Products</li>
+          <li className="breadcrumb-item active" aria-current="page">
+            {selectedCategory !== 'ALL' ? selectedCategory : 'Shop Products'}
+          </li>
         </ol>
       </nav>
 
@@ -144,11 +153,13 @@ const CustomerProductListPage = () => {
       {successMsg && (
         <div className="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
           <i className="bi bi-check-circle-fill me-2"></i> {successMsg}
+          <button type="button" className="btn-close" onClick={() => setSuccessMsg('')}></button>
         </div>
       )}
-      {errorMsg && (
+      {errorMsg && !loading && (
         <div className="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
           <i className="bi bi-exclamation-circle-fill me-2"></i> {errorMsg}
+          <button type="button" className="btn-close" onClick={() => setErrorMsg('')}></button>
         </div>
       )}
 
@@ -166,7 +177,7 @@ const CustomerProductListPage = () => {
               <div className="list-group list-group-flush fs-7">
                 <button
                   type="button"
-                  className={`list-group-item list-group-item-action border-0 px-2 py-1.5 rounded ${
+                  className={`list-group-item list-group-item-action border-0 px-2 rounded ${
                     selectedCategory === 'ALL' ? 'bg-primary text-white fw-bold' : 'text-dark'
                   }`}
                   onClick={() => handleCategorySelect('ALL')}
@@ -177,7 +188,7 @@ const CustomerProductListPage = () => {
                   <button
                     key={cat._id || cat.id}
                     type="button"
-                    className={`list-group-item list-group-item-action border-0 px-2 py-1.5 rounded ${
+                    className={`list-group-item list-group-item-action border-0 px-2 rounded ${
                       selectedCategory === cat.name ? 'bg-primary text-white fw-bold' : 'text-dark'
                     }`}
                     onClick={() => handleCategorySelect(cat.name)}
@@ -238,6 +249,16 @@ const CustomerProductListPage = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
+                  {searchQuery && (
+                    <button
+                      className="btn btn-outline-secondary border-start-0"
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      title="Clear search"
+                    >
+                      <i className="bi bi-x-lg"></i>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -266,11 +287,37 @@ const CustomerProductListPage = () => {
               </div>
               <p className="mt-2 text-muted fs-7">Loading product catalog...</p>
             </div>
+          ) : errorMsg ? (
+            <div className="card border-0 shadow-sm p-5 text-center my-4">
+              <i className="bi bi-wifi-off fs-1 text-danger d-block mb-3"></i>
+              <h5 className="fw-bold text-dark">Unable to Load Products</h5>
+              <p className="text-muted small mb-4">{errorMsg}</p>
+              <button
+                className="btn btn-primary fw-bold px-4 mx-auto"
+                style={{ maxWidth: '200px' }}
+                onClick={fetchCatalogData}
+              >
+                <i className="bi bi-arrow-clockwise me-2"></i>Retry
+              </button>
+            </div>
           ) : processedProducts.length === 0 ? (
             <div className="card border-0 shadow-sm p-5 text-center my-4">
               <i className="bi bi-box-seam fs-1 text-secondary d-block mb-2"></i>
               <h5 className="fw-bold text-dark">No products found</h5>
               <p className="text-muted small">Try modifying your search criteria or resetting filters.</p>
+              <button
+                className="btn btn-outline-secondary btn-sm fw-semibold mt-2 mx-auto"
+                style={{ maxWidth: '180px' }}
+                onClick={() => {
+                  setSelectedCategory('ALL');
+                  setSearchQuery('');
+                  setMaxPrice(100000);
+                  setSortBy('DEFAULT');
+                  setSearchParams({});
+                }}
+              >
+                Reset Filters
+              </button>
             </div>
           ) : (
             <div className="row g-4">
@@ -297,9 +344,9 @@ const CustomerProductListPage = () => {
                       <button
                         onClick={() => handleToggleWishlist(prod)}
                         disabled={isProcessing}
-                        className="position-absolute top-0 end-0 m-3 btn btn-light rounded-circle shadow-sm p-1.5 z-1 border-0"
+                        className="position-absolute top-0 end-0 m-3 btn btn-light rounded-circle shadow-sm z-1 border-0 d-flex align-items-center justify-content-center"
                         title={inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
-                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        style={{ width: '32px', height: '32px' }}
                       >
                         <i className={`bi ${inWishlist ? 'bi-heart-fill text-danger' : 'bi-heart text-secondary'}`}></i>
                       </button>
@@ -354,7 +401,11 @@ const CustomerProductListPage = () => {
                             onClick={() => handleAddToCart(prod)}
                             disabled={prod.quantity === 0 || isProcessing}
                           >
-                            <i className="bi bi-cart-plus me-1"></i> Add
+                            {isProcessing ? (
+                              <span className="spinner-border spinner-border-sm" role="status"></span>
+                            ) : (
+                              <><i className="bi bi-cart-plus me-1"></i>Add</>
+                            )}
                           </button>
                         </div>
                       </div>

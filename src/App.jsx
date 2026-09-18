@@ -4,15 +4,20 @@ import { AdminAuthProvider } from './context/AdminAuthContext';
 import { CustomerAuthProvider } from './context/CustomerAuthContext';
 import AppRoutes from './routes/AppRoutes';
 
+/**
+ * App root.
+ * BrowserRouter is the outermost wrapper so that all providers and components
+ * inside have access to router context (useNavigate, useLocation, etc.).
+ */
 function App() {
   return (
-    <AdminAuthProvider>
-      <CustomerAuthProvider>
-        <BrowserRouter>
+    <BrowserRouter>
+      <AdminAuthProvider>
+        <CustomerAuthProvider>
           <AppRoutes />
-        </BrowserRouter>
-      </CustomerAuthProvider>
-    </AdminAuthProvider>
+        </CustomerAuthProvider>
+      </AdminAuthProvider>
+    </BrowserRouter>
   );
 }
 
