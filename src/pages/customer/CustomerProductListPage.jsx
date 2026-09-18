@@ -40,7 +40,7 @@ const SORT_OPTIONS = [
 const CustomerProductListPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { addToCart, toggleWishlist, isInWishlist } = useCustomerAuth();
+  const { cart, addToCart, toggleWishlist, isInWishlist } = useCustomerAuth();
 
   // ── Server data ──
   const [allProducts, setAllProducts]   = useState([]);
@@ -339,7 +339,7 @@ const CustomerProductListPage = () => {
       ? (prod.discountType === 'fixed' ? `₹${prod.discountValue} OFF` : `${prod.discountValue}% OFF`)
       : null;
     const inWishlist   = isInWishlist(productId);
-    const isInCart     = cart?.some((item) => (item?.product?._id || item?.product) === productId);
+    const isInCart     = Array.isArray(cart) && cart.some((item) => (item?.product?._id || item?.product) === productId);
     const cartBusy     = actionId === `cart_${productId}`;
     const wishlistBusy = actionId === `wish_${productId}`;
 
