@@ -80,6 +80,16 @@ const CustomerCheckoutPage = () => {
       return;
     }
 
+    if (!/^\d{10}$/.test(formData.phone.trim())) {
+      showToast(setErrorMsg, 'Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    if (!/^\d{6}$/.test(formData.pincode.trim())) {
+      showToast(setErrorMsg, 'Please enter a valid 6-digit pincode');
+      return;
+    }
+
     try {
       const res = await addressService.addAddress(formData);
       setAddresses(res.addresses);

@@ -61,6 +61,8 @@ const CustomerCartPage = () => {
   }, 0);
 
   const totalDiscount = Math.max(0, rawSubtotal - totalAmount);
+  const deliveryCharge = totalAmount > 500 || totalAmount === 0 ? 0 : 40;
+  const grandTotal = totalAmount + deliveryCharge;
 
   if (cartLoading) {
     return (
@@ -281,16 +283,18 @@ const CustomerCartPage = () => {
                 <span className="fw-semibold">- ₹{totalDiscount.toLocaleString('en-IN')}</span>
               </div>
 
-              <div className="d-flex justify-content-between mb-3 fs-7 text-success">
-                <span>Delivery Charges</span>
-                <span className="fw-semibold">FREE</span>
+              <div className="d-flex justify-content-between mb-3 fs-7">
+                <span className="text-secondary">Delivery Charges</span>
+                <span className={deliveryCharge === 0 ? 'text-success fw-semibold' : 'fw-semibold'}>
+                  {deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge}`}
+                </span>
               </div>
 
               <hr className="my-3" />
 
               <div className="d-flex justify-content-between mb-2 fs-6 fw-bold text-dark">
                 <span>Total Amount</span>
-                <span className="fs-5 text-dark">₹{totalAmount.toLocaleString('en-IN')}</span>
+                <span className="fs-5 text-dark">₹{grandTotal.toLocaleString('en-IN')}</span>
               </div>
 
               {totalDiscount > 0 && (

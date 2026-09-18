@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { categoryService } from '../../services/categoryService';
 import { productService } from '../../services/productService';
 import { getImageUrl } from '../../config/apiConfig';
@@ -8,7 +8,9 @@ import CustomerBannerSlider from '../../components/customer/CustomerBannerSlider
 
 const CustomerHomePage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { addToCart, toggleWishlist, isInWishlist } = useCustomerAuth();
+  const activeCategoryParam = searchParams.get('category') || '';
 
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
@@ -199,47 +201,10 @@ const CustomerHomePage = () => {
 
   return (
     <div className="pb-5">
-      {/* 1. Horizontal Categories Bar */}
-      <section className="bg-white border-bottom py-3 mb-3 shadow-sm">
-        <div className="container">
-          {loading ? (
-            <div className="text-center py-2">
-              <span className="spinner-border spinner-border-sm text-primary" role="status"></span>
-            </div>
-          ) : categories.length === 0 ? (
-            <div className="text-center text-muted fs-8 py-2">No categories available</div>
-          ) : (
-            <div className="d-flex align-items-center overflow-auto gap-4 py-1 text-center justify-content-start justify-content-md-center">
-              {categories.map((cat) => (
-                <div
-                  key={cat._id || cat.id}
-                  className="category-circle-item cursor-pointer flex-shrink-0"
-                  onClick={() => handleCategoryClick(cat.name)}
-                >
-                  <img
-                    src={cat.image ? getImageUrl(cat.image) : 'https://via.placeholder.com/64?text=Category'}
-                    alt={cat.name}
-                    className="rounded-circle object-fit-cover shadow-sm mb-1 border border-2 border-light"
-                    width="60"
-                    height="60"
-                    onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/60?text=Category';
-                    }}
-                  />
-                  <div className="fw-semibold text-dark fs-8 text-truncate" style={{ maxWidth: '90px' }}>
-                    {cat.name}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
       <div className="container">
         {/* API Error Alert */}
         {fetchError && !loading && (
-          <div className="alert alert-danger d-flex align-items-center justify-content-between flex-wrap gap-3 shadow-sm mb-4" role="alert">
+          <div className="alert alert-danger d-flex align-items-center justify-content-between flex-wrap gap-3 shadow-sm mb-3" role="alert">
             <div>
               <i className="bi bi-wifi-off me-2"></i>
               <strong>Network Error:</strong> {fetchError}
@@ -252,14 +217,62 @@ const CustomerHomePage = () => {
 
         {/* Toast Notification Alert */}
         {toastMsg && (
-          <div className={`alert alert-${toastType} alert-dismissible fade show shadow-sm mb-4`} role="alert">
+          <div className={`alert alert-${toastType} alert-dismissible fade show shadow-sm mb-3`} role="alert">
             <i className={`bi ${toastType === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2`}></i>
             {toastMsg}
           </div>
         )}
 
-        {/* 2. Interactive Banner Slider */}
+        {/* 1. Hero Banner Slider — appears FIRST */}
         <CustomerBannerSlider />
+
+        {/* 2. Category Horizontal Strip — directly BELOW the banner */}
+        <div className="home-category-strip mb-4">
+          <div className="d-flex align-items-center justify-content-between mb-2">
+            <span className="fw-bold text-dark fs-7">Shop by Category</span>
+            <Link to="/customer/products" className="text-fk-blue fw-semibold fs-8 text-decoration-none">
+              View All <i className="bi bi-arrow-right"></i>
+            </Link>
+          </div>
+          {loading ? (
+            <div className="d-flex gap-3">
+              {[1,2,3,4,5,6].map(n => (
+                <div key={n} className="text-center flex-shrink-0">
+                  <div className="skeleton-img rounded-circle mx-auto mb-1" style={{ width: '60px', height: '60px', borderRadius: '50% !important' }}></div>
+                  <div className="skeleton-line short mx-auto"></div>
+                </div>
+              ))}
+            </div>
+          ) : categories.length === 0 ? (
+            <div className="text-muted fs-8 py-2">No categories available</div>
+          ) : (
+            <div className="category-strip-scroll">
+              {categories.map((cat) => {
+                const isActive = activeCategoryParam === cat.name;
+                return (
+                  <div
+                    key={cat._id || cat.id}
+                    className={`category-circle-item${isActive ? ' active-cat' : ''}`}
+                    onClick={() => handleCategoryClick(cat.name)}
+                    title={cat.name}
+                  >
+                    <img
+                      src={cat.image ? getImageUrl(cat.image) : 'https://via.placeholder.com/64?text=Category'}
+                      alt={cat.name}
+                      className="rounded-circle object-fit-cover shadow-sm mb-1 border border-2 border-light"
+                      width="62"
+                      height="62"
+                      onError={(e) => { e.target.src = 'https://via.placeholder.com/62?text=Cat'; }}
+                    />
+                    <div className={`cat-label fw-semibold fs-8 text-truncate${isActive ? ' text-fk-blue' : ' text-dark'}`} style={{ maxWidth: '78px' }}>
+                      {cat.name}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {/* 3. Top Deals / Big Discounts */}
         {bestDeals.length > 0 && (
