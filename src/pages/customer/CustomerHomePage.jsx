@@ -245,13 +245,16 @@ const CustomerHomePage = () => {
           </div>
         )}
 
+        {/* Visually Hidden H1 for Search Engine Indexing & SEO */}
+        <h1 className="visually-hidden">ShopNation - Online Shopping for Electronics, Fashion &amp; More</h1>
+
         {/* 1. Hero Banner Slider — appears FIRST */}
         <CustomerBannerSlider />
 
         {/* 2. Category Horizontal Strip — directly BELOW the banner */}
         <div className="home-category-strip mb-4">
           <div className="d-flex align-items-center justify-content-between mb-2">
-            <span className="fw-bold text-dark fs-7">Shop by Category</span>
+            <h2 className="fw-bold text-dark fs-6 mb-0">Shop by Category</h2>
             <Link to="/customer/products" className="text-fk-blue fw-semibold fs-8 text-decoration-none">
               View All <i className="bi bi-arrow-right"></i>
             </Link>
@@ -272,15 +275,15 @@ const CustomerHomePage = () => {
               {categories.map((cat) => {
                 const isActive = activeCategoryParam === cat.name;
                 return (
-                  <div
+                  <Link
                     key={cat._id || cat.id}
-                    className={`category-circle-item${isActive ? ' active-cat' : ''}`}
-                    onClick={() => handleCategoryClick(cat.name)}
-                    title={cat.name}
+                    to={`/customer/products?category=${encodeURIComponent(cat.name)}`}
+                    className={`category-circle-item text-decoration-none${isActive ? ' active-cat' : ''}`}
+                    title={`Shop ${cat.name} on ShopNation`}
                   >
                     <img
                       src={cat.image ? getImageUrl(cat.image) : 'https://via.placeholder.com/64?text=Category'}
-                      alt={cat.name}
+                      alt={`Buy ${cat.name} products online at ShopNation`}
                       className="rounded-circle object-fit-cover shadow-sm mb-1 border border-2 border-light"
                       width="62"
                       height="62"
@@ -289,7 +292,7 @@ const CustomerHomePage = () => {
                     <div className={`cat-label fw-semibold fs-8 text-truncate${isActive ? ' text-fk-blue' : ' text-dark'}`} style={{ maxWidth: '78px' }}>
                       {cat.name}
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
@@ -301,9 +304,9 @@ const CustomerHomePage = () => {
           <section className="mb-5 bg-white p-4 rounded-3 shadow-sm border">
             <div className="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
               <div>
-                <h4 className="fw-bold text-dark mb-0 d-flex align-items-center">
-                  <i className="bi bi-lightning-charge-fill text-warning me-2 fs-3"></i> Top Deals & Big Discounts
-                </h4>
+                <h2 className="fw-bold text-dark mb-0 d-flex align-items-center fs-5">
+                  <i className="bi bi-lightning-charge-fill text-warning me-2 fs-3"></i> Top Deals &amp; Big Discounts
+                </h2>
                 <small className="text-muted">Save extra on handpicked promotional products</small>
               </div>
               <Link to="/customer/products" className="btn btn-fk-blue text-white btn-sm fw-bold px-3">
@@ -318,7 +321,7 @@ const CustomerHomePage = () => {
         <section className="mb-5 bg-white p-4 rounded-3 shadow-sm border">
           <div className="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
             <div>
-              <h4 className="fw-bold text-dark mb-0">Featured Products</h4>
+              <h2 className="fw-bold text-dark mb-0 fs-5">Featured Products</h2>
               <small className="text-muted">Top quality items selected for you</small>
             </div>
             <Link to="/customer/products" className="text-fk-blue fw-bold text-decoration-none fs-7">
@@ -344,9 +347,9 @@ const CustomerHomePage = () => {
           <section className="mb-4 bg-white p-4 rounded-3 shadow-sm border">
             <div className="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
               <div>
-                <h4 className="fw-bold text-dark mb-0 d-flex align-items-center">
+                <h2 className="fw-bold text-dark mb-0 d-flex align-items-center fs-5">
                   <i className="bi bi-stars text-primary me-2 fs-4"></i> New Arrivals
-                </h4>
+                </h2>
                 <small className="text-muted">Freshly added inventory from sellers</small>
               </div>
               <Link to="/customer/products?sort=NEWEST" className="text-fk-blue fw-bold text-decoration-none fs-7">
