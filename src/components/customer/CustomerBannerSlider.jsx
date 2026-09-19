@@ -56,7 +56,7 @@ const CustomerBannerSlider = () => {
   };
 
   return (
-    <div className="position-relative overflow-hidden rounded-3 shadow-sm mb-4 bg-dark">
+    <div className="position-relative overflow-hidden rounded-3 shadow-sm mt-3 mb-4 bg-dark">
       {/* Slide Item */}
       <div
         className="cursor-pointer position-relative text-white"
